@@ -6,7 +6,7 @@ on:
     paths:
     - .github/workflows/semgrep.yml
   schedule:
-  - cron: '0 0 * * 0'
+  - cron: '10 23 * * *'
 name: Semgrep SAST Scan
 jobs:
   semgrep:
