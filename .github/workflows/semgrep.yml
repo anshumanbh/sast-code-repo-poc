@@ -34,7 +34,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    - name: Run all the rules & send results to Defect Dojo if not a PR
+    - name: Run all the rules & send results to Defect Dojo, if not a PR
       id: run_rules_nonpr
       run: |
         semgrep scan --sarif --config ./rules/ ./code > nonpr.sarif;
@@ -43,7 +43,7 @@ jobs:
            python3 ./rules/scripts/send-results-to-defectdojo.py ./nonpr.sarif;
         fi
       if: github.event_name != 'pull_request'
-    - name: Run monitor rules & send results to Defect Dojo if a PR
+    - name: Run monitor rules & send results to Defect Dojo, if a PR
       id: run_monitor_rules_pr
       env:
         SEMGREP_RULES: ./../rules/monitor/
@@ -54,7 +54,7 @@ jobs:
           python3 ./../rules/scripts/send-results-to-defectdojo.py ./monitor_out.sarif;
         fi
       if: github.event_name == 'pull_request'
-    - name: Run comment and blocking rules, retrieve JSON results & send results to Defect Dojo if a PR
+    - name: Run comment and blocking rules, retrieve JSON results & send results to Defect Dojo, if a PR
       id: run_comment_and_blocking_rules_pr
       env:
         SEMGREP_RULES: "./../rules/comment/ ./../rules/block/"
