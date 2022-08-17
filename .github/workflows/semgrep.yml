@@ -6,8 +6,8 @@ on:
     paths:
     - .github/workflows/semgrep.yml
   schedule:
-  - cron: '5 6 * * *'
-name: Semgrep
+  - cron: '0 0 * * 0'
+name: Semgrep SAST Scan
 jobs:
   semgrep:
     name: Scan
@@ -54,28 +54,52 @@ jobs:
           python3 ./../rules/scripts/send-results-to-defectdojo.py ./monitor_out.sarif;
         fi
       if: github.event_name == 'pull_request'
-    - name: Run comment and blocking rules, retrieve JSON results & send results to Defect Dojo, if a PR
-      id: run_comment_and_blocking_rules_pr
+    - name: Run comment rules, retrieve JSON results & send results to Defect Dojo, if a PR
+      id: run_comment_rules_pr
       env:
-        SEMGREP_RULES: "./../rules/comment/ ./../rules/block/"
+        SEMGREP_RULES: ./../rules/comment/
       run: |
         cd code;
-        echo $(semgrep ci --json || true) > out.json; cat out.json
-        echo $(semgrep ci --sarif || true) > out.sarif; cat out.sarif
-        if [[ -s out.json ]]; then
-          python3 ./../rules/scripts/retrieve-results-from-json.py ./out.json ./results.txt;
-          cat ./results.txt
-          if [[ -s results.txt ]]
-            echo "::set-output name=results_file_exists::True"
+        echo $(semgrep ci --json || true) > comment_out.json; cat comment_out.json
+        echo $(semgrep ci --sarif || true) > comment_out.sarif; cat comment_out.sarif
+        if [[ -s comment_out.json ]]; then
+          python3 ./../rules/scripts/retrieve-results-from-json.py ./comment_out.json ./comment_results.txt; cat comment_results.txt
+          if [[ -s comment_results.txt ]]
+            echo "::set-output name=comment_results_file_exists::True"
           fi
         fi
-        if [[ -s out.sarif ]]; then
-          python3 ./../rules/scripts/send-results-to-defectdojo.py ./out.sarif;
+        if [[ -s comment_out.sarif ]]; then
+          python3 ./../rules/scripts/send-results-to-defectdojo.py ./comment_out.sarif;
         fi
       if: github.event_name == 'pull_request'
-    - name: Comment on PR if findings are identified on the diff by the comment & blocking rules
+    - name: Comment on PR for comment rules if findings exist, if a PR
       uses: marocchino/sticky-pull-request-comment@v2
       with:
         recreate: true
-        path: ./code/results.txt
-      if: steps.run_comment_and_blocking_rules_pr.outputs.results_file_exists == 'True'
+        path: ./code/comment_results.txt
+      if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'True'
+    - name: Run blocking rules, retrieve JSON results & send results to Defect Dojo, if a PR
+      id: run_blocking_rules_pr
+      env:
+        SEMGREP_RULES: ./../rules/block/
+      run: |
+        cd code;
+        echo $(semgrep ci --json) > blocking_out.json; cat blocking_out.json
+        echo $(semgrep ci --sarif) > blocking_out.sarif; cat blocking_out.sarif
+        if [[ -s blocking_out.json ]]; then
+          python3 ./../rules/scripts/retrieve-results-from-json.py ./blocking_out.json ./blocking_results.txt; cat blocking_results.txt
+          if [[ -s blocking_results.txt ]]
+            echo "::set-output name=blocking_results_file_exists::True"
+          fi
+        fi
+        if [[ -s blocking_out.sarif ]]; then
+          python3 ./../rules/scripts/send-results-to-defectdojo.py ./blocking_out.sarif;
+        fi
+      if: github.event_name == 'pull_request'
+    - name: Comment on PR for blocking rules if findings exist, if a PR
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        recreate: true
+        path: ./code/blocking_results.txt
+      if: steps.run_blocking_rules_pr.outputs.blocking_results_file_exists == 'True'
+
