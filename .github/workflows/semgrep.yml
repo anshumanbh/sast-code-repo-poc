@@ -1,0 +1,81 @@
+on:
+  pull_request: {}
+  push:
+    branches:
+    - main
+    paths:
+    - .github/workflows/semgrep.yml
+  schedule:
+  - cron: '0 0 * * 0'
+name: Semgrep
+jobs:
+  semgrep:
+    name: Scan
+    runs-on: ubuntu-20.04
+    container:
+      image: returntocorp/semgrep
+    env:
+      DEFECT_DOJO_TOKEN: ${{ secrets.DD_TOKEN }}
+      DEFECT_DOJO_DOMAIN: ${{ secrets.DD_DOMAIN }}
+      DEFECT_DOJO_ENGAGEMENT_VALUE: '3'
+      DEFECT_DOJO_SCAN_TYPE: SARIF
+    steps:
+    - name: Checkout rules
+      uses: actions/checkout@v3
+      with:
+        repository: anshumanbh/semgrep-rules-poc
+        token: ${{ secrets.ACCESS_TOKEN }}
+        path: ./rules
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        path: ./code
+    - name: Setup python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Run all the rules & send results to Defect Dojo if not a PR
+      id: run_rules_nonpr
+      run: |
+        semgrep scan --sarif --config ./rules/ ./code > nonpr.sarif;
+        cat nonpr.sarif
+        if [[ -s nonpr.sarif ]]; then
+           python3 ./rules/scripts/send-results-to-defectdojo.py ./nonpr.sarif;
+        fi
+      if: github.event_name != 'pull_request'
+    - name: Run monitor rules & send results to Defect Dojo if a PR
+      id: run_monitor_rules_pr
+      env:
+        SEMGREP_RULES: ./../rules/monitor/
+      run: |
+        cd code;
+        echo $(semgrep ci --sarif || true) > monitor_out.sarif; cat monitor_out.sarif
+        if [[ -s monitor_out.sarif ]]; then
+          python3 ./../rules/scripts/send-results-to-defectdojo.py ./monitor_out.sarif;
+        fi
+      if: github.event_name == 'pull_request'
+    - name: Run comment and blocking rules, retrieve JSON results & send results to Defect Dojo if a PR
+      id: run_comment_and_blocking_rules_pr
+      env:
+        SEMGREP_RULES: "./../rules/comment/ ./../rules/block/"
+      run: |
+        cd code;
+        echo $(semgrep ci --json || true) > out.json; cat out.json
+        echo $(semgrep ci --sarif || true) > out.sarif; cat out.sarif
+        if [[ -s out.json ]]; then
+          python3 ./../rules/scripts/retrieve-results-from-json.py ./out.json ./results.txt;
+          cat ./results.txt
+          if [[ -s results.txt ]]
+            echo "::set-output name=results_file_exists::True"
+          fi
+        fi
+        if [[ -s out.sarif ]]; then
+          python3 ./../rules/scripts/send-results-to-defectdojo.py ./out.sarif;
+        fi
+      if: github.event_name == 'pull_request'
+    - name: Comment on PR if findings are identified on the diff by the comment & blocking rules
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        recreate: true
+        path: ./code/results.txt
+      if: steps.run_comment_and_blocking_rules_pr.outputs.results_file_exists == 'True'
