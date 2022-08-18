@@ -97,9 +97,7 @@ jobs:
     - name: Rename the comment results file to final results file if only that file exists
       id: pr_comment_case1
       run: |
-        echo "Semgrep SAST Scan Results" > ./code/final_results.txt
-        echo "--- \n" >> ./code/final_results.txt
-        cat ./code/comment_results.txt >> ./code/final_results.txt
+        mv ./code/comment_results.txt ./code/final_results.txt
         if [[ -s ./code/final_results.txt ]]; then
           echo "::set-output name=final_results_file_exists::True"
         fi
@@ -107,9 +105,7 @@ jobs:
     - name: Rename the blocking results file to final results file if only that file exists
       id: pr_comment_case2
       run: |
-        echo "Semgrep SAST Scan Results" > ./code/final_results.txt
-        echo "--- \n" >> ./code/final_results.txt
-        cat ./code/blocking_results.txt >> ./code/final_results.txt
+        mv ./code/blocking_results.txt ./code/final_results.txt
         if [[ -s ./code/final_results.txt ]]; then
           echo "::set-output name=final_results_file_exists::True"
         fi
@@ -117,9 +113,7 @@ jobs:
     - name: Append both comment and blocking results file and rename to final results file if both the files exist
       id: pr_comment_case3
       run: |
-        echo "Semgrep SAST Scan Results" > ./code/final_results.txt
-        echo "--- \n" >> ./code/final_results.txt
-        cat ./code/comment_results.txt >> ./code/final_results.txt;
+        cat ./code/comment_results.txt > ./code/final_results.txt;
         cat ./code/blocking_results.txt >> ./code/final_results.txt
         if [[ -s ./code/final_results.txt ]]; then
           echo "::set-output name=final_results_file_exists::True"
@@ -128,14 +122,11 @@ jobs:
     - name: Create file with no results if none of the comment or blocking results file exist
       id: pr_comment_case4
       run: |
-        echo "Semgrep SAST Scan resulted in NO findings" > ./code/final_results.txt
+        echo "Semgrep Scan resulted in no findings" > ./code/final_results.txt
         if [[ -s ./code/final_results.txt ]]; then
           echo "::set-output name=final_results_file_exists::True"
         fi
       if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'False' && steps.run_blocking_rules_pr.outputs.blocking_results_file_exists == 'False'
-    - name: Test
-      run: |
-        cat ./code/final_results.txt
     - name: Comment on PR, if a PR
       uses: marocchino/sticky-pull-request-comment@v2
       with:
