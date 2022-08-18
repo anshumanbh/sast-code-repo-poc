@@ -49,13 +49,8 @@ jobs:
       run: |
         cd code;
         echo $(semgrep ci --sarif) > blocking_out.sarif;
-        echo $(semgrep ci --json) > blocking_out.json;
         if [[ -s blocking_out.sarif ]]; then
           python3 ./../rules/scripts/send-results-to-defectdojo.py ./blocking_out.sarif;
-        fi
-        if [[ -s blocking_out.json ]]; then
-          python3 ./../rules/scripts/retrieve-results-from-json.py ./blocking_out.json ./blocking_results.txt;
-          cat blocking_results.txt
         fi
         semgrep ci
       if: github.event_name == 'pull_request'
