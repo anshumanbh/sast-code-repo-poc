@@ -76,7 +76,7 @@ jobs:
       uses: marocchino/sticky-pull-request-comment@v2
       with:
         recreate: true
-        path: ./code/comment_results.txt
+        path: ./comment_results.txt
       if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'True'
     - name: Run blocking rules, retrieve JSON results & send results to Defect Dojo, if a PR
       id: run_blocking_rules_pr
