@@ -4,6 +4,12 @@ AKIAIOSFODNN7EAXMPLE
 # ruleid: detected-aws-access-key-id-value
 ASIAIOSFODNN7EAXMPLE
 
+# ruleid: detected-aws-access-key-id-value
+ASIAIOSFODNN7EAXMPLE36
+
+# ruleid: detected-aws-access-key-id-value
+ASIAIOSFODNN7EAXMPLE40
+
 # ok: detected-aws-access-key-id-value
 AKIAIOSFODNN7EXAMPLE
 

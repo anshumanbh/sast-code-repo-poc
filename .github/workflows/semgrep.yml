@@ -125,7 +125,7 @@ jobs:
     - name: Create file with no results if none of the comment or blocking results file exist
       id: pr_comment_case4
       run: |
-        echo "Semgrep Scan resulted in NO findings" > ./code/final_results.txt
+        echo "Semgrep SAST Scan - Passed. No findings." > ./code/final_results.txt
         if [[ -s ./code/final_results.txt ]]; then
           echo "::set-output name=final_results_file_exists::True"
         fi
