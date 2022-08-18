@@ -42,6 +42,18 @@ jobs:
            python3 ./rules/scripts/send-results-to-defectdojo.py ./nonpr.sarif;
         fi
       if: github.event_name != 'pull_request'
+    - name: Run blocking rules, retrieve JSON results & send results to Defect Dojo, if a PR
+      id: run_blocking_rules_pr
+      env:
+        SEMGREP_RULES: ./../rules/block/
+      run: |
+        cd code;
+        echo $(semgrep ci --sarif) > blocking_out.sarif;
+        if [[ -s blocking_out.sarif ]]; then
+          python3 ./../rules/scripts/send-results-to-defectdojo.py ./blocking_out.sarif;
+        fi
+        semgrep ci --json
+      if: github.event_name == 'pull_request'
     - name: Run monitor rules & send results to Defect Dojo, if a PR
       id: run_monitor_rules_pr
       env:
@@ -72,18 +84,6 @@ jobs:
         if [[ -s comment_out.sarif ]]; then
           python3 ./../rules/scripts/send-results-to-defectdojo.py ./comment_out.sarif;
         fi
-      if: github.event_name == 'pull_request'
-    - name: Run blocking rules, retrieve JSON results & send results to Defect Dojo, if a PR
-      id: run_blocking_rules_pr
-      env:
-        SEMGREP_RULES: ./../rules/block/
-      run: |
-        cd code;
-        echo $(semgrep ci --sarif) > blocking_out.sarif;
-        if [[ -s blocking_out.sarif ]]; then
-          python3 ./../rules/scripts/send-results-to-defectdojo.py ./blocking_out.sarif;
-        fi
-        semgrep ci --json
       if: github.event_name == 'pull_request'
     - name: Rename the comment results file to final results file if that file exists
       id: pr_comment_case1
