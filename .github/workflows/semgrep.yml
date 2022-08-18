@@ -42,7 +42,7 @@ jobs:
            python3 ./rules/scripts/send-results-to-defectdojo.py ./nonpr.sarif;
         fi
       if: github.event_name != 'pull_request'
-    - name: Run blocking rules, retrieve JSON results & send results to Defect Dojo, if a PR
+    - name: Run blocking rules & send results to Defect Dojo, if a PR. If it passes, continue with other rules
       id: run_blocking_rules_pr
       env:
         SEMGREP_RULES: ./../rules/block/
