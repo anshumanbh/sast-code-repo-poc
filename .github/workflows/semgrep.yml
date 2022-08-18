@@ -98,6 +98,7 @@ jobs:
       id: pr_comment_case1
       run: |
         echo "Semgrep SAST Scan Results" > ./code/final_results.txt
+        echo "--- \n" >> ./code/final_results.txt
         cat ./code/comment_results.txt >> ./code/final_results.txt
         if [[ -s ./code/final_results.txt ]]; then
           echo "::set-output name=final_results_file_exists::True"
@@ -107,6 +108,7 @@ jobs:
       id: pr_comment_case2
       run: |
         echo "Semgrep SAST Scan Results" > ./code/final_results.txt
+        echo "--- \n" >> ./code/final_results.txt
         cat ./code/blocking_results.txt >> ./code/final_results.txt
         if [[ -s ./code/final_results.txt ]]; then
           echo "::set-output name=final_results_file_exists::True"
@@ -116,6 +118,7 @@ jobs:
       id: pr_comment_case3
       run: |
         echo "Semgrep SAST Scan Results" > ./code/final_results.txt
+        echo "--- \n" >> ./code/final_results.txt
         cat ./code/comment_results.txt >> ./code/final_results.txt;
         cat ./code/blocking_results.txt >> ./code/final_results.txt
         if [[ -s ./code/final_results.txt ]]; then
