@@ -62,10 +62,12 @@ jobs:
         cd code;
         echo $(semgrep ci --json || true) > comment_out.json; cat comment_out.json
         echo $(semgrep ci --sarif || true) > comment_out.sarif; cat comment_out.sarif
-        if [[ -s comment_out.json ]]; then
-          python3 ./../rules/scripts/retrieve-results-from-json.py ./comment_out.json ./comment_results.txt; cat comment_results.txt
-          if [[ -s comment_results.txt ]]; then
-            cat comment_results.txt
+        if [[ -s ./comment_out.json ]]; then
+          python3 ./../rules/scripts/retrieve-results-from-json.py ./comment_out.json ./comment_results.txt;
+          cat ./comment_results.txt
+          if [[ -s ./comment_results.txt ]]; then
+            cat ./comment_results.txt
+            pwd
             echo "::set-output name=comment_results_file_exists::True"
           fi
         fi
@@ -73,6 +75,11 @@ jobs:
           python3 ./../rules/scripts/send-results-to-defectdojo.py ./comment_out.sarif;
         fi
       if: github.event_name == 'pull_request'
+    - name: Test Step
+      run: |
+        ls -al
+        ls -al ./code
+        cat ./code/comment_results.txt
     - name: Comment on PR for comment rules if findings exist, if a PR
       uses: marocchino/sticky-pull-request-comment@v2
       with:
