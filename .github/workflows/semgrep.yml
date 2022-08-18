@@ -84,16 +84,8 @@ jobs:
           python3 ./../rules/scripts/send-results-to-defectdojo.py ./blocking_out.sarif;
         fi
         semgrep ci --json
-        if [[ -s blocking_out.json ]]; then
-          python3 ./../rules/scripts/retrieve-results-from-json.py ./blocking_out.json ./blocking_results.txt; cat blocking_results.txt
-          if [[ -s blocking_results.txt ]]; then
-            echo "::set-output name=blocking_results_file_exists::True"
-          else
-            echo "::set-output name=blocking_results_file_exists::False"
-          fi
-        fi
       if: github.event_name == 'pull_request'
-    - name: Rename the comment results file to final results file if only that file exists
+    - name: Rename the comment results file to final results file if that file exists
       id: pr_comment_case1
       run: |
         mv ./code/comment_results.txt ./code/final_results.txt
@@ -101,38 +93,19 @@ jobs:
         if [[ -s ./code/final_results.txt ]]; then
           echo "::set-output name=final_results_file_exists::True"
         fi
-      if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'True' && steps.run_blocking_rules_pr.outputs.blocking_results_file_exists == 'False'
-    - name: Rename the blocking results file to final results file if only that file exists
+      if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'True'
+    - name: Create file with no results if comment results file does not exist
       id: pr_comment_case2
-      run: |
-        mv ./code/blocking_results.txt ./code/final_results.txt
-        sed -i '1s/^/Semgrep SAST Scan Results /' ./code/final_results.txt
-        if [[ -s ./code/final_results.txt ]]; then
-          echo "::set-output name=final_results_file_exists::True"
-        fi
-      if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'False' && steps.run_blocking_rules_pr.outputs.blocking_results_file_exists == 'True'
-    - name: Append both comment and blocking results file and rename to final results file if both the files exist
-      id: pr_comment_case3
-      run: |
-        mv ./code/comment_results.txt ./code/final_results.txt;
-        cat ./code/blocking_results.txt >> ./code/final_results.txt
-        sed -i '1s/^/Semgrep SAST Scan Results /' ./code/final_results.txt
-        if [[ -s ./code/final_results.txt ]]; then
-          echo "::set-output name=final_results_file_exists::True"
-        fi
-      if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'True' && steps.run_blocking_rules_pr.outputs.blocking_results_file_exists == 'True'
-    - name: Create file with no results if none of the comment or blocking results file exist
-      id: pr_comment_case4
       run: |
         echo "Semgrep SAST Scan - Passed. No findings." > ./code/final_results.txt
         if [[ -s ./code/final_results.txt ]]; then
           echo "::set-output name=final_results_file_exists::True"
         fi
-      if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'False' && steps.run_blocking_rules_pr.outputs.blocking_results_file_exists == 'False'
-    - name: Comment on PR, if a PR
+      if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'False'
+    - name: Comment on the PR for the comment rules
       uses: marocchino/sticky-pull-request-comment@v2
       with:
         recreate: true
         path: ./code/final_results.txt
-      if: steps.pr_comment_case1.outputs.final_results_file_exists == 'True' || steps.pr_comment_case2.outputs.final_results_file_exists == 'True' || steps.pr_comment_case3.outputs.final_results_file_exists == 'True' || steps.pr_comment_case4.outputs.final_results_file_exists == 'True'
+      if: steps.pr_comment_case1.outputs.final_results_file_exists == 'True' || steps.pr_comment_case2.outputs.final_results_file_exists == 'True'
 
