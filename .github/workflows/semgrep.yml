@@ -64,7 +64,7 @@ jobs:
         echo $(semgrep ci --sarif || true) > comment_out.sarif; cat comment_out.sarif
         if [[ -s comment_out.json ]]; then
           python3 ./../rules/scripts/retrieve-results-from-json.py ./comment_out.json ./comment_results.txt; cat comment_results.txt
-          if [[ -s comment_results.txt ]]
+          if [[ -s comment_results.txt ]]; then
             echo "::set-output name=comment_results_file_exists::True"
           fi
         fi
@@ -88,7 +88,7 @@ jobs:
         echo $(semgrep ci --sarif) > blocking_out.sarif; cat blocking_out.sarif
         if [[ -s blocking_out.json ]]; then
           python3 ./../rules/scripts/retrieve-results-from-json.py ./blocking_out.json ./blocking_results.txt; cat blocking_results.txt
-          if [[ -s blocking_results.txt ]]
+          if [[ -s blocking_results.txt ]]; then
             echo "::set-output name=blocking_results_file_exists::True"
           fi
         fi
