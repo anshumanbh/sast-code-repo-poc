@@ -65,6 +65,7 @@ jobs:
         if [[ -s comment_out.json ]]; then
           python3 ./../rules/scripts/retrieve-results-from-json.py ./comment_out.json ./comment_results.txt; cat comment_results.txt
           if [[ -s comment_results.txt ]]; then
+            cat comment_results.txt
             echo "::set-output name=comment_results_file_exists::True"
           fi
         fi
@@ -76,7 +77,7 @@ jobs:
       uses: marocchino/sticky-pull-request-comment@v2
       with:
         recreate: true
-        path: ./comment_results.txt
+        path: ./code/comment_results.txt
       if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'True'
     - name: Run blocking rules, retrieve JSON results & send results to Defect Dojo, if a PR
       id: run_blocking_rules_pr
