@@ -5,7 +5,7 @@ resource "aws_db_instance" "enabled_mysql" {
   engine            = "postgres"
   instance_class    = "db.t3.small"
   password          = "password"
-  username          = "username"
+  username          = "usernam"
 
   iam_database_authentication_enabled = true
 }
