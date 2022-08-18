@@ -127,9 +127,6 @@ jobs:
           echo "::set-output name=final_results_file_exists::True"
         fi
       if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'False' && steps.run_blocking_rules_pr.outputs.blocking_results_file_exists == 'False'
-    - name: Test
-      run: |
-        cat ./code/final_results.txt
     - name: Comment on PR, if a PR
       uses: marocchino/sticky-pull-request-comment@v2
       with:
