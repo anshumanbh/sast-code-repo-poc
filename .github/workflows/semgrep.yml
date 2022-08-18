@@ -130,7 +130,8 @@ jobs:
     - name: Comment on PR, if a PR
       uses: marocchino/sticky-pull-request-comment@v2
       with:
-        recreate: true
+        message: Semgrep Static Analysis Scan Results
+        hide_and_recreate: true
         path: ./code/final_results.txt
       if: steps.pr_comment_case1.outputs.final_results_file_exists == 'True' || steps.pr_comment_case2.outputs.final_results_file_exists == 'True' || steps.pr_comment_case3.outputs.final_results_file_exists == 'True' || steps.pr_comment_case4.outputs.final_results_file_exists == 'True'
 
