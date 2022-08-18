@@ -66,18 +66,14 @@ jobs:
           python3 ./../rules/scripts/retrieve-results-from-json.py ./comment_out.json ./comment_results.txt; cat comment_results.txt
           if [[ -s comment_results.txt ]]; then
             echo "::set-output name=comment_results_file_exists::True"
+          else
+            echo "::set-output name=comment_results_file_exists::False"
           fi
         fi
         if [[ -s comment_out.sarif ]]; then
           python3 ./../rules/scripts/send-results-to-defectdojo.py ./comment_out.sarif;
         fi
       if: github.event_name == 'pull_request'
-    - name: Comment on PR for comment rules if findings exist, if a PR
-      uses: marocchino/sticky-pull-request-comment@v2
-      with:
-        recreate: true
-        path: ./code/comment_results.txt
-      if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'True'
     - name: Run blocking rules, retrieve JSON results & send results to Defect Dojo, if a PR
       id: run_blocking_rules_pr
       env:
@@ -90,16 +86,51 @@ jobs:
           python3 ./../rules/scripts/retrieve-results-from-json.py ./blocking_out.json ./blocking_results.txt; cat blocking_results.txt
           if [[ -s blocking_results.txt ]]; then
             echo "::set-output name=blocking_results_file_exists::True"
+          else
+            echo "::set-output name=blocking_results_file_exists::False"
           fi
         fi
         if [[ -s blocking_out.sarif ]]; then
           python3 ./../rules/scripts/send-results-to-defectdojo.py ./blocking_out.sarif;
         fi
       if: github.event_name == 'pull_request'
-    - name: Comment on PR for blocking rules if findings exist, if a PR
+    - name: Rename the comment results file to final results file if only that file exists
+      id: pr_comment_case1
+      run: |
+        mv ./code/comment_results.txt ./code/final_results.txt
+        if [[ -s ./code/final_results.txt ]]; then
+          echo "::set-output name=final_results_file_exists::True"
+        fi
+      if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'True' && steps.run_blocking_rules_pr.outputs.blocking_results_file_exists == 'False'
+    - name: Rename the blocking results file to final results file if only that file exists
+      id: pr_comment_case2
+      run: |
+        mv ./code/blocking_results.txt ./code/final_results.txt
+        if [[ -s ./code/final_results.txt ]]; then
+          echo "::set-output name=final_results_file_exists::True"
+        fi
+      if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'False' && steps.run_blocking_rules_pr.outputs.blocking_results_file_exists == 'True'
+    - name: Append both comment and blocking results file and rename to final results file if both the files exist
+      id: pr_comment_case3
+      run: |
+        cat ./code/comment_results.txt > ./code/final_results.txt;
+        cat ./code/blocking_results.txt >> ./code/final_results.txt
+        if [[ -s ./code/final_results.txt ]]; then
+          echo "::set-output name=final_results_file_exists::True"
+        fi
+      if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'True' && steps.run_blocking_rules_pr.outputs.blocking_results_file_exists == 'True'
+    - name: Create file with no results if none of the comment or blocking results file exist
+      id: pr_comment_case4
+      run: |
+        echo "Semgrep Scan resulted in no findings" > ./code/final_results.txt
+        if [[ -s ./code/final_results.txt ]]; then
+          echo "::set-output name=final_results_file_exists::True"
+        fi
+      if: steps.run_comment_rules_pr.outputs.comment_results_file_exists == 'False' && steps.run_blocking_rules_pr.outputs.blocking_results_file_exists == 'False'
+    - name: Comment on PR, if a PR
       uses: marocchino/sticky-pull-request-comment@v2
       with:
         recreate: true
-        path: ./code/blocking_results.txt
-      if: steps.run_blocking_rules_pr.outputs.blocking_results_file_exists == 'True'
+        path: ./code/final_results.txt
+      if: steps.pr_comment_case1.outputs.final_results_file_exists == 'True' || steps.pr_comment_case2.outputs.final_results_file_exists == 'True' || steps.pr_comment_case3.outputs.final_results_file_exists == 'True' || steps.pr_comment_case4.outputs.final_results_file_exists == 'True'
 
