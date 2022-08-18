@@ -38,7 +38,6 @@ jobs:
       id: run_rules_nonpr
       run: |
         semgrep scan --sarif --config ./rules/ ./code > nonpr.sarif;
-        cat nonpr.sarif
         if [[ -s nonpr.sarif ]]; then
            python3 ./rules/scripts/send-results-to-defectdojo.py ./nonpr.sarif;
         fi
@@ -49,7 +48,7 @@ jobs:
         SEMGREP_RULES: ./../rules/monitor/
       run: |
         cd code;
-        echo $(semgrep ci --sarif || true) > monitor_out.sarif; cat monitor_out.sarif
+        echo $(semgrep ci --sarif || true) > monitor_out.sarif;
         if [[ -s monitor_out.sarif ]]; then
           python3 ./../rules/scripts/send-results-to-defectdojo.py ./monitor_out.sarif;
         fi
@@ -60,8 +59,8 @@ jobs:
         SEMGREP_RULES: ./../rules/comment/
       run: |
         cd code;
-        echo $(semgrep ci --json || true) > comment_out.json; cat comment_out.json
-        echo $(semgrep ci --sarif || true) > comment_out.sarif; cat comment_out.sarif
+        echo $(semgrep ci --json || true) > comment_out.json;
+        echo $(semgrep ci --sarif || true) > comment_out.sarif;
         if [[ -s comment_out.json ]]; then
           python3 ./../rules/scripts/retrieve-results-from-json.py ./comment_out.json ./comment_results.txt; cat comment_results.txt
           if [[ -s comment_results.txt ]]; then
@@ -80,8 +79,11 @@ jobs:
         SEMGREP_RULES: ./../rules/block/
       run: |
         cd code;
-        echo $(semgrep ci --json) > blocking_out.json; cat blocking_out.json
-        echo $(semgrep ci --sarif) > blocking_out.sarif; cat blocking_out.sarif
+        echo $(semgrep ci --sarif) > blocking_out.sarif;
+        if [[ -s blocking_out.sarif ]]; then
+          python3 ./../rules/scripts/send-results-to-defectdojo.py ./blocking_out.sarif;
+        fi
+        semgrep ci --json
         if [[ -s blocking_out.json ]]; then
           python3 ./../rules/scripts/retrieve-results-from-json.py ./blocking_out.json ./blocking_results.txt; cat blocking_results.txt
           if [[ -s blocking_results.txt ]]; then
@@ -89,9 +91,6 @@ jobs:
           else
             echo "::set-output name=blocking_results_file_exists::False"
           fi
-        fi
-        if [[ -s blocking_out.sarif ]]; then
-          python3 ./../rules/scripts/send-results-to-defectdojo.py ./blocking_out.sarif;
         fi
       if: github.event_name == 'pull_request'
     - name: Rename the comment results file to final results file if only that file exists
